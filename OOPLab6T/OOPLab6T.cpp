@@ -399,7 +399,6 @@ void menu() {
 
     do {
         cout << "\n==============================\n";
-        cout << " Laboratory work №6\n";
         cout << "==============================\n";
         cout << "1. Task 1: Virtual inheritance\n";
         cout << "2. Task 2: Curves\n";
