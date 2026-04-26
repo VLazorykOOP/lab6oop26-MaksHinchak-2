@@ -398,8 +398,6 @@ void menu() {
     int choice;
 
     do {
-        cout << "\n==============================\n";
-        cout << "==============================\n";
         cout << "1. Task 1: Virtual inheritance\n";
         cout << "2. Task 2: Curves\n";
         cout << "3. Task 3\n";
