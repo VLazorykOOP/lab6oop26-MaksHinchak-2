@@ -1,5 +1,7 @@
 ﻿#include <iostream>
 #include <cmath>
+#include <fstream>
+#include <string>
 using namespace std;
 
 // Без віртуального успадкування
@@ -235,9 +237,161 @@ void task2() {
     }
 }
 
+class ReadFile {
+protected:
+    string filename;
+
+public:
+    ReadFile() : filename("input.txt") {}
+
+    ReadFile(string name) : filename(name) {}
+
+    ReadFile(const ReadFile& other) : filename(other.filename) {}
+
+    virtual ~ReadFile() {}
+
+    virtual void read() {
+        ifstream file(filename);
+
+        if (!file) {
+            cout << "Cannot open file for reading: " << filename << endl;
+            return;
+        }
+
+        string line;
+        cout << "File content:\n";
+
+        while (getline(file, line)) {
+            cout << line << endl;
+        }
+
+        file.close();
+    }
+
+    friend ostream& operator<<(ostream& out, const ReadFile& obj) {
+        out << "ReadFile filename: " << obj.filename;
+        return out;
+    }
+
+    friend istream& operator>>(istream& in, ReadFile& obj) {
+        cout << "Enter filename for reading: ";
+        in >> obj.filename;
+        return in;
+    }
+};
+
+class WriteFile {
+protected:
+    string filename;
+
+public:
+    WriteFile() : filename("output.txt") {}
+
+    WriteFile(string name) : filename(name) {}
+
+    WriteFile(const WriteFile& other) : filename(other.filename) {}
+
+    virtual ~WriteFile() {}
+
+    virtual void write(const string& text) {
+        ofstream file(filename);
+
+        if (!file) {
+            cout << "Cannot open file for writing: " << filename << endl;
+            return;
+        }
+
+        file << text;
+        file.close();
+
+        cout << "Text written to file: " << filename << endl;
+    }
+
+    friend ostream& operator<<(ostream& out, const WriteFile& obj) {
+        out << "WriteFile filename: " << obj.filename;
+        return out;
+    }
+
+    friend istream& operator>>(istream& in, WriteFile& obj) {
+        cout << "Enter filename for writing: ";
+        in >> obj.filename;
+        return in;
+    }
+};
+
+class ReadWriteFile : public ReadFile, public WriteFile {
+public:
+    ReadWriteFile() : ReadFile("data.txt"), WriteFile("data.txt") {}
+
+    ReadWriteFile(string name) : ReadFile(name), WriteFile(name) {}
+
+    ReadWriteFile(const ReadWriteFile& other)
+        : ReadFile(other), WriteFile(other) {}
+
+    ~ReadWriteFile() override {}
+
+    void read() override {
+        ReadFile::read();
+    }
+
+    void write(const string& text) override {
+        WriteFile::write(text);
+    }
+
+    friend ostream& operator<<(ostream& out, const ReadWriteFile& obj) {
+        out << "ReadWriteFile filename: " << obj.ReadFile::filename;
+        return out;
+    }
+
+    friend istream& operator>>(istream& in, ReadWriteFile& obj) {
+        string name;
+        cout << "Enter filename for reading and writing: ";
+        in >> name;
+
+        obj.ReadFile::filename = name;
+        obj.WriteFile::filename = name;
+
+        return in;
+    }
+};
+
 void task3() {
     cout << "\n========== TASK 3 ==========\n";
-    cout << "Task 3 is not added yet.\n";
+    cout << "File hierarchy: read, write, read/write\n\n";
+
+    ReadFile readFile;
+    WriteFile writeFile;
+    ReadWriteFile readWriteFile;
+
+    cin >> readFile;
+    cout << readFile << endl;
+    readFile.read();
+
+    cout << endl;
+
+    cin >> writeFile;
+    cout << writeFile << endl;
+
+    string text;
+    cout << "Enter text to write: ";
+    cin.ignore();
+    getline(cin, text);
+
+    writeFile.write(text);
+
+    cout << endl;
+
+    cin >> readWriteFile;
+    cout << readWriteFile << endl;
+
+    cout << "Enter text for read/write file: ";
+    cin.ignore();
+    getline(cin, text);
+
+    readWriteFile.write(text);
+    readWriteFile.read();
+
+    cout << "\nTask 3 completed.\n";
 }
 
 void menu() {
