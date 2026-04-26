@@ -2,22 +2,28 @@
 #include <fstream>
 #include <random>
 #include <string>
+#include <cmath>
+#include <vector>
+#include <stdexcept>
+#include <utility>
 
 using namespace std;
 
-// Базовий клас (абстрактний)
+// ==========================================
+// ЗАВДАННЯ 1: Віртуальне успадкування
+// ==========================================
+
+// Абстрактний базовий клас для завдання 1
 class Base {
 protected:
     int data;
 public:
     Base(int val) : data(val) { cout << "Base constructor called\n"; }
     virtual ~Base() { cout << "Base destructor called\n"; }
-    virtual void show() = 0; // Чисто віртуальний метод
+    virtual void show() = 0;
 };
 
-// ==========================================
-// 1. Невіртуальне успадкування (Diamond)
-// ==========================================
+// --- Невіртуальне успадкування ---
 class Left : public Base {
 public:
     Left(int val) : Base(val) { cout << "Left constructor\n"; }
@@ -39,9 +45,7 @@ public:
     void show() override { cout << "DerivedNV show" << endl; }
 };
 
-// ==========================================
-// 2. Віртуальне успадкування (Diamond)
-// ==========================================
+// --- Віртуальне успадкування ---
 class VLeft : virtual public Base {
 public:
     VLeft(int val) : Base(val) { cout << "VLeft constructor\n"; }
@@ -63,68 +67,128 @@ public:
     void show() override { cout << "DerivedV show" << endl; }
 };
 
-// --- Функції введення ---
-int getFromKeyboard() {
-    int val;
-    cout << "Введіть число: ";
-    cin >> val;
-    return val;
-}
+// ==========================================
+// ЗАВДАННЯ 2: Криві
+// ==========================================
 
-int getFromFile() {
-    ifstream file("data.txt");
-    int val = 0;
-    if (file >> val) {
-        cout << "Прочитано з файлу: " << val << endl;
-    } else {
-        cout << "Помилка файлу, беремо 0." << endl;
+class Curve {
+protected:
+    double a, b;
+public:
+    Curve(double _a, double _b) : a(_a), b(_b) {}
+    virtual ~Curve() {}
+    virtual pair<double, double> calculateY(double x) = 0;
+    virtual string getName() = 0;
+};
+
+class Line : public Curve {
+public:
+    Line(double a, double b) : Curve(a, b) {}
+    pair<double, double> calculateY(double x) override {
+        double y = a * x + b;
+        return {y, y};
     }
-    return val;
-}
+    string getName() override { return "Пряма"; }
+};
 
-int getFromRandom() {
-    static mt19937 rng(1337);
-    uniform_int_distribution<int> dist(1, 100);
-    int val = dist(rng);
-    cout << "Випадкове число: " << val << endl;
-    return val;
-}
+class Ellipse : public Curve {
+public:
+    Ellipse(double a, double b) : Curve(a, b) {}
+    pair<double, double> calculateY(double x) override {
+        double val = 1.0 - (x * x) / (a * a);
+        if (val < 0) throw domain_error("x поза межами еліпса");
+        double y = b * sqrt(val);
+        return {y, -y};
+    }
+    string getName() override { return "Еліпс"; }
+};
 
-// --- Функція для Завдання 1 ---
-void runTask1() {
-    cout << "\n=== ЗАВДАННЯ 1: Віртуальне успадкування ===\n";
-    cout << "Оберіть метод введення (1-клавіатура, 2-файл, 3-рандом): ";
+class Hyperbola : public Curve {
+public:
+    Hyperbola(double a, double b) : Curve(a, b) {}
+    pair<double, double> calculateY(double x) override {
+        double val = (x * x) / (a * a) - 1.0;
+        if (val < 0) throw domain_error("x поза межами гіперболи");
+        double y = b * sqrt(val);
+        return {y, -y};
+    }
+    string getName() override { return "Гіпербола"; }
+};
+
+// ==========================================
+// ДОПОМІЖНІ ФУНКЦІЇ ТА МЕНЮ
+// ==========================================
+
+int getVal() {
     int choice;
+    cout << "Оберіть метод введення (1-клавіатура, 2-файл, 3-рандом): ";
     cin >> choice;
-    int val = (choice == 1) ? getFromKeyboard() : (choice == 2 ? getFromFile() : getFromRandom());
+    if (choice == 1) {
+        int val;
+        cout << "Введіть число: "; cin >> val;
+        return val;
+    } else if (choice == 2) {
+        ifstream file("data.txt");
+        int val = 0;
+        if (file >> val) cout << "Прочитано з файлу: " << val << endl;
+        else cout << "Файл не знайдено, взято 0" << endl;
+        return val;
+    } else {
+        static mt19937 rng(1337);
+        uniform_int_distribution<int> dist(1, 100);
+        int val = dist(rng);
+        cout << "Випадкове число: " << val << endl;
+        return val;
+    }
+}
 
-    cout << "\n--- Non-Virtual Hierarchy (Size) ---\n";
-    DerivedNV objNV(val);
-    cout << "Size of DerivedNV: " << sizeof(objNV) << " bytes" << endl;
+void runTask1() {
+    cout << "\n--- ЗАВДАННЯ 1 ---\n";
+    int val = getVal();
 
-    cout << "\n--- Virtual Hierarchy (Size) ---\n";
-    DerivedV objV(val);
-    cout << "Size of DerivedV: " << sizeof(objV) << " bytes" << endl;
-    cout << "------------------------------------\n";
+    cout << "\nNon-Virtual Size: " << sizeof(DerivedNV(val)) << " bytes" << endl;
+    cout << "Virtual Size: " << sizeof(DerivedV(val)) << " bytes" << endl;
+}
+
+void runTask2() {
+    cout << "\n--- ЗАВДАННЯ 2 ---\n";
+    double a, b, x;
+    cout << "Введіть коефіцієнти a та b: ";
+    cin >> a >> b;
+    cout << "Введіть x: ";
+    cin >> x;
+
+    vector<Curve*> curves = { new Line(a, b), new Ellipse(a, b), new Hyperbola(a, b) };
+
+    for (Curve* c : curves) {
+        try {
+            pair<double, double> res = c->calculateY(x);
+            cout << c->getName() << ": y1 = " << res.first << ", y2 = " << res.second << endl;
+        } catch (const exception& e) {
+            cout << c->getName() << ": " << e.what() << endl;
+        }
+    }
+
+    for (Curve* c : curves) delete c;
 }
 
 int main() {
-    int menuChoice;
+    setlocale(LC_ALL, "Ukrainian");
+    int choice;
     while (true) {
-        cout << "\nМЕНЮ ЗАВДАНЬ:\n"
+        cout << "\n========================\n"
+             << "МЕНЮ:\n"
              << "1. Завдання 1 (Успадкування)\n"
-             << "2. Завдання 2 ()\n"
-             << "3. Завдання 3 ()\n"
+             << "2. Завдання 2 (Криві)\n"
              << "0. Вихід\n"
              << "Вибір: ";
-        cin >> menuChoice;
+        cin >> choice;
 
-        switch (menuChoice) {
+        switch (choice) {
             case 1: runTask1(); break;
-            case 2: cout << "Завдання 2 ще не реалізовано.\n"; break;
-            case 3: cout << "Завдання 3 ще не реалізовано.\n"; break;
+            case 2: runTask2(); break;
             case 0: return 0;
-            default: cout << "Невірний вибір.\n";
+            default: cout << "Помилка вибору.\n";
         }
     }
     return 0;
