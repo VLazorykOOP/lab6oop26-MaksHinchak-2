@@ -1,195 +1,280 @@
 ﻿#include <iostream>
-#include <fstream>
-#include <random>
-#include <string>
 #include <cmath>
-#include <vector>
-#include <stdexcept>
-#include <utility>
-
 using namespace std;
 
-// ==========================================
-// ЗАВДАННЯ 1: Віртуальне успадкування
-// ==========================================
+// Без віртуального успадкування
 
-// Абстрактний базовий клас для завдання 1
-class Base {
+class A {
 protected:
-    int data;
+    int a;
 public:
-    Base(int val) : data(val) { cout << "Base constructor called\n"; }
-    virtual ~Base() { cout << "Base destructor called\n"; }
-    virtual void show() = 0;
+    A() : a(1) {}
 };
 
-// --- Невіртуальне успадкування ---
-class Left : public Base {
+class B {
+protected:
+    int b;
 public:
-    Left(int val) : Base(val) { cout << "Left constructor\n"; }
-    ~Left() { cout << "Left destructor\n"; }
-    void show() override { cout << "Left data: " << data << endl; }
+    B() : b(2) {}
 };
 
-class Right : public Base {
+class C : public A, public B {
+protected:
+    int c;
 public:
-    Right(int val) : Base(val) { cout << "Right constructor\n"; }
-    ~Right() { cout << "Right destructor\n"; }
-    void show() override { cout << "Right data: " << data << endl; }
+    C() : c(3) {}
 };
 
-class DerivedNV : public Left, public Right {
+class D : public A {
+protected:
+    int d;
 public:
-    DerivedNV(int val) : Left(val), Right(val) { cout << "DerivedNV constructor\n"; }
-    ~DerivedNV() { cout << "DerivedNV destructor\n"; }
-    void show() override { cout << "DerivedNV show" << endl; }
+    D() : d(4) {}
 };
 
-// --- Віртуальне успадкування ---
-class VLeft : virtual public Base {
+class E : public C {
+protected:
+    int e;
 public:
-    VLeft(int val) : Base(val) { cout << "VLeft constructor\n"; }
-    ~VLeft() { cout << "VLeft destructor\n"; }
-    void show() override { cout << "VLeft data: " << data << endl; }
+    E() : e(5) {}
 };
 
-class VRight : virtual public Base {
+class F : public C, public D, public E {
+protected:
+    int f;
 public:
-    VRight(int val) : Base(val) { cout << "VRight constructor\n"; }
-    ~VRight() { cout << "VRight destructor\n"; }
-    void show() override { cout << "VRight data: " << data << endl; }
+    F() : f(6) {}
 };
 
-class DerivedV : public VLeft, public VRight {
+
+// З віртуальним успадкуванням
+
+class VA {
+protected:
+    int a;
 public:
-    DerivedV(int val) : Base(val), VLeft(val), VRight(val) { cout << "DerivedV constructor\n"; }
-    ~DerivedV() { cout << "DerivedV destructor\n"; }
-    void show() override { cout << "DerivedV show" << endl; }
+    VA() : a(1) {}
 };
 
-// ==========================================
-// ЗАВДАННЯ 2: Криві
-// ==========================================
+class VB {
+protected:
+    int b;
+public:
+    VB() : b(2) {}
+};
+
+class VC : virtual public VA, virtual public VB {
+protected:
+    int c;
+public:
+    VC() : c(3) {}
+};
+
+class VD : virtual public VA {
+protected:
+    int d;
+public:
+    VD() : d(4) {}
+};
+
+class VE : virtual public VC {
+protected:
+    int e;
+public:
+    VE() : e(5) {}
+};
+
+class VF : virtual public VC, virtual public VD, virtual public VE {
+protected:
+    int f;
+public:
+    VF() : f(6) {}
+};
+
+
+void task1() {
+    cout << "\n========== TASK 1 ==========\n";
+    cout << "Virtual and non-virtual inheritance\n\n";
+
+    C objC;
+    D objD;
+    E objE;
+    F objF;
+
+    VC objVC;
+    VD objVD;
+    VE objVE;
+    VF objVF;
+
+    cout << "----- Without virtual inheritance -----\n";
+    cout << "sizeof(objC) = " << sizeof(objC) << " bytes\n";
+    cout << "sizeof(objD) = " << sizeof(objD) << " bytes\n";
+    cout << "sizeof(objE) = " << sizeof(objE) << " bytes\n";
+    cout << "sizeof(objF) = " << sizeof(objF) << " bytes\n";
+
+    cout << "\n----- With virtual inheritance -----\n";
+    cout << "sizeof(objVC) = " << sizeof(objVC) << " bytes\n";
+    cout << "sizeof(objVD) = " << sizeof(objVD) << " bytes\n";
+    cout << "sizeof(objVE) = " << sizeof(objVE) << " bytes\n";
+    cout << "sizeof(objVF) = " << sizeof(objVF) << " bytes\n";
+}
+
+// ===============================
+// Абстрактний клас
+// ===============================
 
 class Curve {
-protected:
-    double a, b;
 public:
-    Curve(double _a, double _b) : a(_a), b(_b) {}
+    virtual double getY(double x) = 0; // чисто віртуальна функція
+    virtual void show() = 0;
     virtual ~Curve() {}
-    virtual pair<double, double> calculateY(double x) = 0;
-    virtual string getName() = 0;
 };
+
+
+// ===============================
+// Пряма: y = ax + b
+// ===============================
 
 class Line : public Curve {
+private:
+    double a, b;
+
 public:
-    Line(double a, double b) : Curve(a, b) {}
-    pair<double, double> calculateY(double x) override {
-        double y = a * x + b;
-        return {y, y};
+    Line(double a, double b) : a(a), b(b) {}
+
+    double getY(double x) override {
+        return a * x + b;
     }
-    string getName() override { return "Пряма"; }
+
+    void show() override {
+        cout << "Line: y = " << a << "x + " << b << endl;
+    }
 };
+
+
+// ===============================
+// Еліпс: x^2/a^2 + y^2/b^2 = 1
+// y = ± b * sqrt(1 - x^2/a^2)
+// ===============================
 
 class Ellipse : public Curve {
+private:
+    double a, b;
+
 public:
-    Ellipse(double a, double b) : Curve(a, b) {}
-    pair<double, double> calculateY(double x) override {
-        double val = 1.0 - (x * x) / (a * a);
-        if (val < 0) throw domain_error("x поза межами еліпса");
-        double y = b * sqrt(val);
-        return {y, -y};
+    Ellipse(double a, double b) : a(a), b(b) {}
+
+    double getY(double x) override {
+        double inside = 1 - (x * x) / (a * a);
+            if (inside < 0) {
+                cout << "No real solution for y\n";
+                return NAN;
+            }
+        return b * sqrt(inside); // беремо + гілку
     }
-    string getName() override { return "Еліпс"; }
+
+    void show() override {
+        cout << "Ellipse: x^2/" << a*a << " + y^2/" << b*b << " = 1\n";
+    }
 };
+
+
+// ===============================
+// Гіпербола: x^2/a^2 - y^2/b^2 = 1
+// y = ± b * sqrt(x^2/a^2 - 1)
+// ===============================
 
 class Hyperbola : public Curve {
+private:
+    double a, b;
+
 public:
-    Hyperbola(double a, double b) : Curve(a, b) {}
-    pair<double, double> calculateY(double x) override {
-        double val = (x * x) / (a * a) - 1.0;
-        if (val < 0) throw domain_error("x поза межами гіперболи");
-        double y = b * sqrt(val);
-        return {y, -y};
+    Hyperbola(double a, double b) : a(a), b(b) {}
+
+    double getY(double x) override {
+        double inside = (x * x) / (a * a) - 1;
+        if (inside < 0) {
+            cout << "No real y (hyperbola)\n";
+            return NAN;
+        }
+        return b * sqrt(inside);
     }
-    string getName() override { return "Гіпербола"; }
+
+    void show() override {
+        cout << "Hyperbola: x^2/" << a*a << " - y^2/" << b*b << " = 1\n";
+    }
 };
 
-// ==========================================
-// ДОПОМІЖНІ ФУНКЦІЇ ТА МЕНЮ
-// ==========================================
 
-int getVal() {
-    int choice;
-    cout << "Оберіть метод введення (1-клавіатура, 2-файл, 3-рандом): ";
-    cin >> choice;
-    if (choice == 1) {
-        int val;
-        cout << "Введіть число: "; cin >> val;
-        return val;
-    } else if (choice == 2) {
-        ifstream file("data.txt");
-        int val = 0;
-        if (file >> val) cout << "Прочитано з файлу: " << val << endl;
-        else cout << "Файл не знайдено, взято 0" << endl;
-        return val;
-    } else {
-        static mt19937 rng(1337);
-        uniform_int_distribution<int> dist(1, 100);
-        int val = dist(rng);
-        cout << "Випадкове число: " << val << endl;
-        return val;
-    }
-}
+// ===============================
+// TASK 2
+// ===============================
 
-void runTask1() {
-    cout << "\n--- ЗАВДАННЯ 1 ---\n";
-    int val = getVal();
+void task2() {
+    cout << "\n========== TASK 2 ==========\n";
 
-    cout << "\nNon-Virtual Size: " << sizeof(DerivedNV(val)) << " bytes" << endl;
-    cout << "Virtual Size: " << sizeof(DerivedV(val)) << " bytes" << endl;
-}
-
-void runTask2() {
-    cout << "\n--- ЗАВДАННЯ 2 ---\n";
-    double a, b, x;
-    cout << "Введіть коефіцієнти a та b: ";
-    cin >> a >> b;
-    cout << "Введіть x: ";
+    double x;
+    cout << "Enter x: ";
     cin >> x;
 
-    vector<Curve*> curves = { new Line(a, b), new Ellipse(a, b), new Hyperbola(a, b) };
+    Curve* curves[3];
 
-    for (Curve* c : curves) {
-        try {
-            pair<double, double> res = c->calculateY(x);
-            cout << c->getName() << ": y1 = " << res.first << ", y2 = " << res.second << endl;
-        } catch (const exception& e) {
-            cout << c->getName() << ": " << e.what() << endl;
-        }
+    curves[0] = new Line(2, 3);
+    curves[1] = new Ellipse(5, 3);
+    curves[2] = new Hyperbola(4, 2);
+
+    for (int i = 0; i < 3; i++) {
+        curves[i]->show();
+        double y = curves[i]->getY(x);
+        cout << "y = " << y << endl << endl;
     }
 
-    for (Curve* c : curves) delete c;
+    // очищення пам’яті
+    for (int i = 0; i < 3; i++) {
+        delete curves[i];
+    }
 }
 
-int main() {
-    setlocale(LC_ALL, "Ukrainian");
+void task3() {
+    cout << "\n========== TASK 3 ==========\n";
+    cout << "Task 3 is not added yet.\n";
+}
+
+void menu() {
     int choice;
-    while (true) {
-        cout << "\n========================\n"
-             << "МЕНЮ:\n"
-             << "1. Завдання 1 (Успадкування)\n"
-             << "2. Завдання 2 (Криві)\n"
-             << "0. Вихід\n"
-             << "Вибір: ";
+
+    do {
+        cout << "\n==============================\n";
+        cout << " Laboratory work №6\n";
+        cout << "==============================\n";
+        cout << "1. Task 1: Virtual inheritance\n";
+        cout << "2. Task 2: Curves\n";
+        cout << "3. Task 3\n";
+        cout << "0. Exit\n";
+        cout << "Choose task: ";
         cin >> choice;
 
         switch (choice) {
-            case 1: runTask1(); break;
-            case 2: runTask2(); break;
-            case 0: return 0;
-            default: cout << "Помилка вибору.\n";
+            case 1:
+                task1();
+                break;
+            case 2:
+                task2();
+                break;
+            case 3:
+                task3();
+                break;
+            case 0:
+                cout << "Program finished.\n";
+                break;
+            default:
+                cout << "Incorrect choice.\n";
         }
-    }
+
+    } while (choice != 0);
+}
+
+int main() {
+    menu();
     return 0;
 }
